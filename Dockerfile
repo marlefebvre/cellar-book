@@ -2,13 +2,13 @@
 FROM node:22-slim AS deps
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci --omit=dev
+RUN HUSKY=0 npm ci --omit=dev
 
 # Stage 2 — builder
 FROM node:22-slim AS builder
 WORKDIR /app
 COPY package.json package-lock.json* ./
-RUN npm ci
+RUN HUSKY=0 npm ci
 COPY . .
 RUN npm run build
 
