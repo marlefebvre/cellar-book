@@ -1,0 +1,23 @@
+services:
+  cellar-book:
+    image: cellar-book:latest
+    build: .
+    restart: unless-stopped
+    ports:
+      - "3210:3000"
+    volumes:
+      - /volume1/docker/cellar-book/data:/data
+      - /volume1/docker/cellar-book/labels:/labels
+    environment:
+      NODE_ENV: production
+      DB_PATH: /data/cave.sqlite
+      LABELS_DIR: /labels
+      SESSION_SECRET: "${SESSION_SECRET}"
+      APP_PASSWORD_HASH: "${APP_PASSWORD_HASH}"
+      ANTHROPIC_API_KEY: "${ANTHROPIC_API_KEY}"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
