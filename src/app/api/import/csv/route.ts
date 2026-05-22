@@ -17,6 +17,13 @@ interface CsvRow {
   source?: string
   cellar_location?: string
   notes?: string
+  // Champs Vivino (ignorés ou mappés)
+  vivino_id?: string
+  vintage_id?: string
+  currency?: string
+  my_rating?: string
+  community_rating?: string
+  community_count?: string
 }
 
 function parseCsv(text: string): CsvRow[] {
@@ -77,12 +84,19 @@ export async function POST(req: NextRequest) {
     const vintage = row.vintage ? parseInt(row.vintage) : null
     const quantity = row.quantity ? parseInt(row.quantity) : 1
     const unitPrice = row.unit_price ? parseFloat(row.unit_price.replace(',', '.')) : null
+    const currency = row.currency?.trim() || 'EUR'
+
+    // Notes générales : on ajoute vivino_id en métadonnée si présent
+    const vivinoMeta = row.vivino_id?.trim()
+      ? `[vivino:${row.vivino_id.trim()}${row.vintage_id?.trim() ? `/v${row.vintage_id.trim()}` : ''}]`
+      : null
+    const notesGeneral = [row.notes?.trim() || null, vivinoMeta].filter(Boolean).join(' ') || null
 
     db.exec('BEGIN')
     try {
       db.prepare(
-        `INSERT INTO wines (producer, cuvee, color, appellation, region, country, vintage, format)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO wines (producer, cuvee, color, appellation, region, country, vintage, format, notes_general)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).run(
         row.producer.trim(),
         row.cuvee.trim(),
@@ -91,7 +105,8 @@ export async function POST(req: NextRequest) {
         row.region?.trim() || null,
         row.country?.trim() || 'France',
         isNaN(vintage as number) ? null : vintage,
-        row.format?.trim() || '75cl'
+        row.format?.trim() || '75cl',
+        notesGeneral
       )
 
       const wine = db.prepare(`SELECT id FROM wines WHERE rowid = last_insert_rowid()`).get() as {
@@ -100,17 +115,18 @@ export async function POST(req: NextRequest) {
 
       db.prepare(
         `INSERT INTO lots (wine_id, quantity_initial, quantity_remaining,
-          unit_price, purchase_date, source, cellar_location, notes)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+          unit_price, currency, purchase_date, source, cellar_location, notes)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).run(
         wine.id,
         quantity,
         quantity,
         unitPrice,
+        currency,
         row.purchase_date?.trim() || null,
         row.source?.trim() || null,
         row.cellar_location?.trim() || 'Montreuil',
-        row.notes?.trim() || null
+        null
       )
 
       db.exec('COMMIT')

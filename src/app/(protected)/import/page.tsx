@@ -58,8 +58,8 @@ export default function ImportPage() {
         {/* Format help */}
         <div className="bg-zinc-900 rounded-lg p-4 space-y-2">
           <p className="text-sm font-medium text-zinc-300">Format attendu (CSV, séparateur ;)</p>
-          <p className="text-xs text-zinc-500 font-mono leading-relaxed">
-            producer;cuvee;color;appellation;region;country;vintage;format;quantity;unit_price;purchase_date;source;cellar_location;notes
+          <p className="text-xs text-zinc-500 font-mono leading-relaxed break-all">
+            producer;cuvee;color;appellation;region;country;vintage;format;quantity;unit_price;purchase_date;source;cellar_location;notes;vivino_id;vintage_id;currency;my_rating;community_rating;community_count
           </p>
           <div className="text-xs text-zinc-600 space-y-1 mt-2">
             <p>
@@ -76,6 +76,18 @@ export default function ImportPage() {
             </p>
             <p>
               • <span className="text-zinc-400">unit_price</span> : séparateur décimal . ou ,
+            </p>
+            <p>
+              • <span className="text-zinc-400">currency</span> : EUR, USD… (défaut EUR)
+            </p>
+            <p>
+              • <span className="text-zinc-400">vivino_id / vintage_id</span> : conservés en
+              métadonnée
+            </p>
+            <p>
+              •{' '}
+              <span className="text-zinc-400">my_rating / community_rating / community_count</span>{' '}
+              : acceptés, non importés
             </p>
           </div>
         </div>
