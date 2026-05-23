@@ -13,6 +13,11 @@ export interface Wine {
   apogee_end_year: number | null
   apogee_source: string | null
   notes_general: string | null
+  vivino_id: string | null
+  vintage_id: string | null
+  vivino_rating: number | null
+  community_rating: number | null
+  community_count: number | null
   created_at: string
   updated_at: string
 }

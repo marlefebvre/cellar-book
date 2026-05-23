@@ -127,7 +127,20 @@ END;
 INSERT OR IGNORE INTO schema_migrations (version) VALUES (1);
 `
 
-const MIGRATIONS: { version: number; sql: string }[] = [{ version: 1, sql: MIGRATION_001 }]
+const MIGRATION_002 = `
+ALTER TABLE wines ADD COLUMN vivino_id      TEXT;
+ALTER TABLE wines ADD COLUMN vintage_id     TEXT;
+ALTER TABLE wines ADD COLUMN vivino_rating  REAL CHECK (vivino_rating IS NULL OR (vivino_rating >= 0 AND vivino_rating <= 5));
+ALTER TABLE wines ADD COLUMN community_rating REAL CHECK (community_rating IS NULL OR (community_rating >= 0 AND community_rating <= 5));
+ALTER TABLE wines ADD COLUMN community_count  INTEGER;
+
+INSERT OR IGNORE INTO schema_migrations (version) VALUES (2);
+`
+
+const MIGRATIONS: { version: number; sql: string }[] = [
+  { version: 1, sql: MIGRATION_001 },
+  { version: 2, sql: MIGRATION_002 },
+]
 
 export function runMigrations(db: DatabaseSync): void {
   db.exec(`

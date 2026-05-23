@@ -86,17 +86,20 @@ export async function POST(req: NextRequest) {
     const unitPrice = row.unit_price ? parseFloat(row.unit_price.replace(',', '.')) : null
     const currency = row.currency?.trim() || 'EUR'
 
-    // Notes générales : on ajoute vivino_id en métadonnée si présent
-    const vivinoMeta = row.vivino_id?.trim()
-      ? `[vivino:${row.vivino_id.trim()}${row.vintage_id?.trim() ? `/v${row.vintage_id.trim()}` : ''}]`
+    const vivinoId = row.vivino_id?.trim() || null
+    const vintageId = row.vintage_id?.trim() || null
+    const vivinoRating = row.my_rating ? parseFloat(row.my_rating.replace(',', '.')) : null
+    const communityRating = row.community_rating
+      ? parseFloat(row.community_rating.replace(',', '.'))
       : null
-    const notesGeneral = [row.notes?.trim() || null, vivinoMeta].filter(Boolean).join(' ') || null
+    const communityCount = row.community_count ? parseInt(row.community_count) : null
 
     db.exec('BEGIN')
     try {
       db.prepare(
-        `INSERT INTO wines (producer, cuvee, color, appellation, region, country, vintage, format, notes_general)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
+        `INSERT INTO wines (producer, cuvee, color, appellation, region, country, vintage, format,
+          notes_general, vivino_id, vintage_id, vivino_rating, community_rating, community_count)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
       ).run(
         row.producer.trim(),
         row.cuvee.trim(),
@@ -106,7 +109,12 @@ export async function POST(req: NextRequest) {
         row.country?.trim() || 'France',
         isNaN(vintage as number) ? null : vintage,
         row.format?.trim() || '75cl',
-        notesGeneral
+        row.notes?.trim() || null,
+        vivinoId,
+        vintageId,
+        vivinoRating && !isNaN(vivinoRating) ? vivinoRating : null,
+        communityRating && !isNaN(communityRating) ? communityRating : null,
+        communityCount && !isNaN(communityCount) ? communityCount : null
       )
 
       const wine = db.prepare(`SELECT id FROM wines WHERE rowid = last_insert_rowid()`).get() as {
