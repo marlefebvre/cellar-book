@@ -6,17 +6,31 @@ import type { WineWithStock } from '@/lib/types'
 
 interface Props {
   wines: WineWithStock[]
-  colorBadge: Record<string, string>
-  apogeeStatus: (
-    start: number | null,
-    end: number | null
-  ) => { label: string; className: string } | null
+}
+
+const COLOR_BADGE: Record<string, string> = {
+  rouge: 'bg-red-900/40 text-red-300 border-red-800',
+  blanc: 'bg-amber-900/40 text-amber-300 border-amber-800',
+  rosé: 'bg-pink-900/40 text-pink-300 border-pink-800',
+  effervescent: 'bg-blue-900/40 text-blue-300 border-blue-800',
+  'vin doux': 'bg-purple-900/40 text-purple-300 border-purple-800',
 }
 
 const COLORS = ['rouge', 'blanc', 'rosé', 'effervescent', 'vin doux']
 const LOCATIONS = ['Montreuil', 'Vézelay']
 
-export function CaveFilters({ wines, colorBadge, apogeeStatus }: Props) {
+function apogeeStatus(
+  start: number | null,
+  end: number | null
+): { label: string; className: string } | null {
+  if (!start && !end) return null
+  const now = new Date().getFullYear()
+  if (end && now > end) return { label: 'passé', className: 'text-zinc-500' }
+  if (start && now < start) return { label: `dès ${start}`, className: 'text-blue-400' }
+  return { label: '✓ apogée', className: 'text-emerald-400' }
+}
+
+export function CaveFilters({ wines }: Props) {
   const [q, setQ] = useState('')
   const [color, setColor] = useState('')
   const [location, setLocation] = useState('')
@@ -27,6 +41,7 @@ export function CaveFilters({ wines, colorBadge, apogeeStatus }: Props) {
     return wines.filter((w) => {
       if (inStock && w.stock === 0) return false
       if (color && w.color !== color) return false
+      if (location) void location // filtrage par cave nécessite les lots — best-effort
       if (q) {
         const match =
           w.producer.toLowerCase().includes(lq) ||
@@ -35,18 +50,12 @@ export function CaveFilters({ wines, colorBadge, apogeeStatus }: Props) {
           (w.region ?? '').toLowerCase().includes(lq)
         if (!match) return false
       }
-      if (location) {
-        // location filter is a hint — we show all wines but would need lots data to filter precisely
-        // For now filter is best-effort without per-wine location data in this query
-        void location
-      }
       return true
     })
   }, [wines, q, color, location, inStock])
 
   return (
     <>
-      {/* Filters */}
       <div className="px-4 py-3 space-y-2 border-b border-zinc-800/50">
         <input
           type="search"
@@ -93,7 +102,6 @@ export function CaveFilters({ wines, colorBadge, apogeeStatus }: Props) {
         </div>
       </div>
 
-      {/* Wine list */}
       <div className="divide-y divide-zinc-800/50">
         {filtered.length === 0 ? (
           <div className="px-4 py-12 text-center text-zinc-500 text-sm">
@@ -127,7 +135,7 @@ export function CaveFilters({ wines, colorBadge, apogeeStatus }: Props) {
                   </div>
                   <div className="flex items-center gap-2 mt-0.5 flex-wrap">
                     <span
-                      className={`text-xs px-1.5 py-0.5 rounded border ${colorBadge[wine.color] ?? 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}
+                      className={`text-xs px-1.5 py-0.5 rounded border ${COLOR_BADGE[wine.color] ?? 'bg-zinc-800 text-zinc-400 border-zinc-700'}`}
                     >
                       {wine.color}
                     </span>
